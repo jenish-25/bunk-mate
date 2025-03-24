@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { GraduationCap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -35,17 +34,51 @@ const Index = () => {
       const currentAttendance = (attended / total) * 100;
       
       // Calculate how many classes can be bunked
-      const minRequired = Math.ceil((required / 100) * total);
-      const maxBunks = Math.max(0, attended - minRequired + remaining);
+      const minRequired = Math.ceil((required / 100) * (total + remaining));
+      const maxBunks = Math.max(0, attended + remaining - minRequired);
       
       // Calculate how many more need to be attended
       const minAttend = Math.max(0, minRequired - attended);
+      
+      // Calculate how many lectures to attend before bunking
+      let lecturesBeforeBunking = 0;
+      if (maxBunks > 0) {
+        lecturesBeforeBunking = 0; // Can already bunk
+      } else {
+        // Calculate how many lectures need to be attended before we can start bunking
+        let tempAttended = attended;
+        let tempTotal = total;
+        let canBunk = false;
+        let counter = 0;
+        
+        // Keep attending classes until we can bunk at least one
+        while (!canBunk && counter < remaining) {
+          tempAttended += 1; // Attend one more class
+          tempTotal += 1;    // Total increases by one
+          counter += 1;      // Count this lecture
+          
+          // Recalculate if we can bunk any now
+          const tempMinRequired = Math.ceil((required / 100) * (tempTotal + (remaining - counter)));
+          const tempMaxBunks = Math.max(0, tempAttended + (remaining - counter) - tempMinRequired);
+          
+          if (tempMaxBunks > 0) {
+            canBunk = true;
+            lecturesBeforeBunking = counter;
+          }
+        }
+        
+        // If we still can't bunk after attending all remaining classes
+        if (!canBunk) {
+          lecturesBeforeBunking = -1; // Indicates impossible to bunk
+        }
+      }
       
       // Set result
       setResult({
         current_attendance: currentAttendance.toFixed(2),
         max_bunks: maxBunks,
-        min_attend: minAttend
+        min_attend: minAttend,
+        lectures_before_bunking: lecturesBeforeBunking
       });
       
       toast({
@@ -160,6 +193,18 @@ const Index = () => {
                   <span className="block text-lg">
                     ✅ NEED TO ATTEND <span className="text-success font-bold">{result.min_attend}</span> MORE LECTURES
                   </span>
+                  
+                  {result.lectures_before_bunking !== undefined && (
+                    <span className="block text-lg mt-2 pt-2 border-t border-gray-700">
+                      {result.lectures_before_bunking === -1 ? (
+                        "❌ YOU CANNOT BUNK ANY LECTURES EVEN AFTER ATTENDING ALL REMAINING LECTURES"
+                      ) : result.lectures_before_bunking === 0 ? (
+                        "🎉 YOU CAN START BUNKING RIGHT AWAY!"
+                      ) : (
+                        <>🔄 ATTEND <span className="text-blue-400 font-bold">{result.lectures_before_bunking}</span> MORE LECTURES BEFORE YOU CAN START BUNKING</>
+                      )}
+                    </span>
+                  )}
                 </p>
               </div>
             )}
