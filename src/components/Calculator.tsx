@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import NumberInput from './NumberInput';
 import AttendanceVisual from './AttendanceVisual';
+import { Button } from './ui/button';
+import { CheckCircle } from 'lucide-react';
 
 const Calculator = () => {
   const { toast } = useToast();
@@ -13,10 +15,11 @@ const Calculator = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   // Calculated values
-  const [currentPercentage, setCurrentPercentage] = useState(0);
+  const [currentPercentage, setCurrentPercentage] = useState(75);
   const [canBunk, setCanBunk] = useState(0);
   const [needToAttend, setNeedToAttend] = useState(0);
   const [status, setStatus] = useState<'good' | 'warning' | 'danger'>('good');
+  const [hasCalculated, setHasCalculated] = useState(false);
   
   // Sync total lectures when attended or remaining changes
   useEffect(() => {
@@ -45,24 +48,21 @@ const Calculator = () => {
         variant: "default",
       });
     }
-    
-    // Calculate results with debounce
-    const timer = setTimeout(() => {
-      calculateAttendance();
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [totalLectures, attendedLectures, requiredPercentage, remainingLectures]);
+  }, [totalLectures, attendedLectures, toast]);
   
-  const calculateAttendance = async () => {
-    if (totalLectures === 0) return;
+  const calculateAttendance = () => {
+    if (totalLectures === 0) {
+      toast({
+        title: "Invalid input",
+        description: "Total lectures must be greater than 0.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsLoading(true);
     
-    // Simulate API call (could be replaced with real API call like in the example)
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       // Calculate current attendance percentage
       const percentage = (attendedLectures / totalLectures) * 100;
       setCurrentPercentage(percentage);
@@ -85,6 +85,14 @@ const Calculator = () => {
       } else {
         setStatus('danger');
       }
+      
+      setHasCalculated(true);
+      
+      toast({
+        title: "Calculation complete",
+        description: `Your current attendance is ${percentage.toFixed(1)}%`,
+        variant: "default",
+      });
     } catch (error) {
       toast({
         title: "Calculation error",
@@ -98,7 +106,7 @@ const Calculator = () => {
   
   return (
     <div className="w-full max-w-md mx-auto space-y-8 p-4">
-      <div className="space-y-6 glass rounded-2xl p-6 animate-fade-in">
+      <div className="space-y-6 glass rounded-2xl p-6 animate-scale">
         <NumberInput
           label="Total Lectures"
           value={totalLectures}
@@ -142,13 +150,22 @@ const Calculator = () => {
           className="animate-fade-in [animation-delay:200ms]"
           hint="Minimum attendance percentage required"
         />
+        
+        <Button 
+          onClick={calculateAttendance} 
+          className="w-full h-12 text-lg font-semibold animate-fade-in [animation-delay:250ms] bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-t-transparent border-white mr-2"></div>
+          ) : (
+            <CheckCircle className="mr-2 h-5 w-5" />
+          )}
+          Calculate Attendance
+        </Button>
       </div>
       
-      {isLoading ? (
-        <div className="flex justify-center items-center h-40 glass rounded-2xl animate-pulse-slow">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      ) : (
+      {hasCalculated && (
         <AttendanceVisual
           percentage={currentPercentage}
           requiredPercentage={requiredPercentage}
