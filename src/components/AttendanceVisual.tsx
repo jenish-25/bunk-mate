@@ -62,9 +62,9 @@ const AttendanceVisual = ({
     )}>
       <div className="space-y-2 mb-4">
         <h3 className={cn("text-xl font-semibold transition-colors", config.text)}>
-          {status === 'good' ? 'You're doing great!' : 
-           status === 'warning' ? 'Almost there!' : 
-           'You need to attend more classes!'}
+          {status === 'good' ? "You're doing great!" : 
+           status === 'warning' ? "Almost there!" : 
+           "You need to attend more classes!"}
         </h3>
         
         <p className="text-muted-foreground text-sm">
