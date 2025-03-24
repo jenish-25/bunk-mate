@@ -94,6 +94,21 @@ const AttendanceVisual = ({
           <span>Required: {requiredPercentage}%</span>
           <span>100%</span>
         </div>
+        
+        <div className="mt-4 p-3 bg-background/20 rounded-lg">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="text-center p-2 bg-background/30 rounded-md">
+              <p className="text-xs text-muted-foreground">Can Bunk</p>
+              <p className={cn("text-lg font-bold", config.text)}>{canBunk}</p>
+            </div>
+            <div className="text-center p-2 bg-background/30 rounded-md">
+              <p className="text-xs text-muted-foreground">Need to Attend</p>
+              <p className={cn("text-lg font-bold", needToAttend > 0 ? "text-destructive" : "text-success")}>
+                {needToAttend}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

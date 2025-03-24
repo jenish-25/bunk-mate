@@ -8,6 +8,7 @@ const Calculator = () => {
   const { toast } = useToast();
   const [totalLectures, setTotalLectures] = useState(100);
   const [attendedLectures, setAttendedLectures] = useState(75);
+  const [remainingLectures, setRemainingLectures] = useState(25);
   const [requiredPercentage, setRequiredPercentage] = useState(75);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -16,6 +17,22 @@ const Calculator = () => {
   const [canBunk, setCanBunk] = useState(0);
   const [needToAttend, setNeedToAttend] = useState(0);
   const [status, setStatus] = useState<'good' | 'warning' | 'danger'>('good');
+  
+  // Sync total lectures when attended or remaining changes
+  useEffect(() => {
+    const calculatedTotal = attendedLectures + remainingLectures;
+    if (calculatedTotal !== totalLectures) {
+      setTotalLectures(calculatedTotal);
+    }
+  }, [attendedLectures, remainingLectures]);
+  
+  // Update remaining lectures when total or attended changes
+  useEffect(() => {
+    const calculatedRemaining = totalLectures - attendedLectures;
+    if (calculatedRemaining !== remainingLectures && calculatedRemaining >= 0) {
+      setRemainingLectures(calculatedRemaining);
+    }
+  }, [totalLectures, attendedLectures]);
   
   // Validate inputs
   useEffect(() => {
@@ -35,14 +52,14 @@ const Calculator = () => {
     }, 300);
     
     return () => clearTimeout(timer);
-  }, [totalLectures, attendedLectures, requiredPercentage]);
+  }, [totalLectures, attendedLectures, requiredPercentage, remainingLectures]);
   
   const calculateAttendance = async () => {
     if (totalLectures === 0) return;
     
     setIsLoading(true);
     
-    // Simulate API call
+    // Simulate API call (could be replaced with real API call like in the example)
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
       
@@ -53,7 +70,8 @@ const Calculator = () => {
       // Calculate how many more lectures can be bunked
       const minimumLecturesToAttend = Math.ceil((requiredPercentage / 100) * totalLectures);
       const canBunkCount = attendedLectures - minimumLecturesToAttend;
-      setCanBunk(Math.max(0, canBunkCount));
+      const maxPossibleBunks = Math.min(remainingLectures, Math.max(0, canBunkCount));
+      setCanBunk(maxPossibleBunks);
       
       // Calculate how many more lectures need to be attended
       const needToAttendCount = minimumLecturesToAttend - attendedLectures;
@@ -101,6 +119,17 @@ const Calculator = () => {
           disabled={isLoading}
           className="animate-fade-in [animation-delay:100ms]"
           hint="Number of lectures you've attended so far"
+        />
+        
+        <NumberInput
+          label="Remaining Lectures"
+          value={remainingLectures}
+          onChange={setRemainingLectures}
+          min={0}
+          max={500 - attendedLectures}
+          disabled={isLoading}
+          className="animate-fade-in [animation-delay:150ms]"
+          hint="Number of remaining lectures in the course"
         />
         
         <NumberInput
